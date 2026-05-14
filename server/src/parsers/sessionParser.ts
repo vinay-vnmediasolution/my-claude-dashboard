@@ -5,6 +5,7 @@ import type {
   SessionData,
   ParsedMessage,
   RawAssistantUsage,
+  BillingSource,
 } from "../types/index.js";
 
 interface RawEntry {
@@ -17,6 +18,7 @@ interface RawEntry {
   gitBranch?: string;
   entrypoint?: string;
   attributionSkill?: string;
+  userType?: string;
   // user entries
   message?: RawUserMessage | RawAssistantMessage;
   // ai-title
@@ -72,6 +74,19 @@ function extractTools(
     .map((b) => ({ name: b.name!, input: b.input }));
 }
 
+function deriveBillingSource(
+  userTypes: Set<string>,
+  serviceTiers: Set<string>,
+): BillingSource {
+  if (userTypes.has("external")) return "api";
+  if (serviceTiers.has("priority")) return "max";
+  if (userTypes.has("max")) return "max";
+  if (userTypes.has("pro")) return "pro";
+  if (userTypes.has("free")) return "free";
+  if (userTypes.size > 0) return "pro"; // non-external userType = subscription
+  return "unknown";
+}
+
 function deriveProjectName(cwd: string): string {
   const parts = cwd.split("/").filter(Boolean);
   if (parts.length >= 2)
@@ -97,6 +112,8 @@ export async function parseSession(
   const entrypoints = new Set<string>();
   const skills = new Set<string>();
   const gitBranches = new Set<string>();
+  const userTypes = new Set<string>();
+  const serviceTiers = new Set<string>();
   const toolUsage: Record<string, number> = {};
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
@@ -120,6 +137,7 @@ export async function parseSession(
     if (entry.entrypoint) entrypoints.add(entry.entrypoint);
     if (entry.gitBranch) gitBranches.add(entry.gitBranch);
     if (entry.attributionSkill) skills.add(entry.attributionSkill);
+    if (entry.userType) userTypes.add(entry.userType);
 
     const entryType = entry.type;
 
@@ -170,6 +188,7 @@ export async function parseSession(
         totalOutputTokens += usage.output_tokens ?? 0;
         totalCacheCreateTokens += usage.cache_creation_input_tokens ?? 0;
         totalCacheReadTokens += usage.cache_read_input_tokens ?? 0;
+        if (usage.service_tier) serviceTiers.add(usage.service_tier);
         msgCost = computeMessageCost(usage, msg.model);
         totalCost += msgCost;
       }
@@ -231,6 +250,7 @@ export async function parseSession(
     totalCacheCreateTokens,
     totalCacheReadTokens,
     estimatedCost: totalCost,
+    billingSource: deriveBillingSource(userTypes, serviceTiers),
   };
 
   return { session, messages };

@@ -11,6 +11,7 @@ import {
 import { useSessions } from "@/api/hooks/useSessions";
 import { PageLoader } from "@/components/shared/LoadingSpinner";
 import { ModelBadge } from "@/components/shared/ModelBadge";
+import { BillingBadge } from "@/components/shared/BillingBadge";
 import {
   formatCost,
   formatRelativeTime,
@@ -102,6 +103,7 @@ export function Sessions() {
                     { label: "Tokens", col: null },
                     { label: "Cost", col: "cost" as SortKey },
                     { label: "Model", col: null },
+                    { label: "Source", col: null },
                   ].map(({ label, col }) => (
                     <th
                       key={label}
@@ -209,6 +211,9 @@ function SessionRow({
       </td>
       <td className="px-4 py-3">
         {session.models[0] && <ModelBadge model={session.models[0]} />}
+      </td>
+      <td className="px-4 py-3">
+        <BillingBadge source={session.billingSource} />
       </td>
     </motion.tr>
   );

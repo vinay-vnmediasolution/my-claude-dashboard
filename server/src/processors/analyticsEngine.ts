@@ -12,6 +12,7 @@ import type {
   TokenTimelineEntry,
   ToolBreakdownEntry,
   CacheMetrics,
+  BillingBreakdownEntry,
 } from "../types/index.js";
 
 const DAYS_OF_WEEK = [
@@ -115,6 +116,31 @@ export function buildModelBreakdown(sessions: SessionData[]): ModelSummary[] {
   return [...map.values()].sort((a, b) => b.cost - a.cost);
 }
 
+function buildBillingBreakdown(
+  sessions: SessionData[],
+): BillingBreakdownEntry[] {
+  const map = new Map<string, BillingBreakdownEntry>();
+
+  for (const s of sessions) {
+    const source = s.billingSource;
+    const existing = map.get(source);
+    if (existing) {
+      existing.sessions++;
+      existing.cost += s.estimatedCost;
+      existing.messages += s.userMessageCount;
+    } else {
+      map.set(source, {
+        source,
+        sessions: 1,
+        cost: s.estimatedCost,
+        messages: s.userMessageCount,
+      });
+    }
+  }
+
+  return [...map.values()].sort((a, b) => b.sessions - a.sessions);
+}
+
 export function buildOverviewStats(sessions: SessionData[]): OverviewStats {
   const activeDates = new Set(sessions.map((s) => s.startTime.slice(0, 10)));
   const totalCost = sessions.reduce((sum, s) => sum + s.estimatedCost, 0);
@@ -156,6 +182,7 @@ export function buildOverviewStats(sessions: SessionData[]): OverviewStats {
     modelBreakdown: buildModelBreakdown(sessions),
     firstSessionDate: sortedSessions[0]?.startTime ?? "",
     lastSessionDate: sortedSessions[sortedSessions.length - 1]?.startTime ?? "",
+    billingBreakdown: buildBillingBreakdown(sessions),
   };
 }
 

@@ -5,6 +5,7 @@ import { ActivityHeatmap } from "./ActivityHeatmap";
 import { HourlyChart } from "./HourlyChart";
 import { TopProjects } from "./TopProjects";
 import { ModelBreakdown } from "./ModelBreakdown";
+import { BillingSourceBar } from "./BillingSourceBar";
 
 export function Overview() {
   const { data, isLoading, error } = useOverview();
@@ -36,6 +37,8 @@ export function Overview() {
       </div>
 
       <HeroStats data={data} />
+
+      <BillingSourceBar data={data.billingBreakdown} />
 
       <ActivityHeatmap data={data.heatmapData} />
 

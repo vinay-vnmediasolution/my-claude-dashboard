@@ -3,7 +3,10 @@ export interface RawAssistantUsage {
   output_tokens: number;
   cache_creation_input_tokens: number;
   cache_read_input_tokens: number;
+  service_tier?: string;
 }
+
+export type BillingSource = "api" | "max" | "pro" | "free" | "unknown";
 
 export interface ParsedMessage {
   uuid: string;
@@ -46,6 +49,14 @@ export interface SessionData {
   totalCacheCreateTokens: number;
   totalCacheReadTokens: number;
   estimatedCost: number;
+  billingSource: BillingSource;
+}
+
+export interface BillingBreakdownEntry {
+  source: BillingSource;
+  sessions: number;
+  cost: number;
+  messages: number;
 }
 
 export interface HeatmapEntry {
@@ -93,6 +104,7 @@ export interface OverviewStats {
   modelBreakdown: ModelSummary[];
   firstSessionDate: string;
   lastSessionDate: string;
+  billingBreakdown: BillingBreakdownEntry[];
 }
 
 export interface SessionsResponse {

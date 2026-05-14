@@ -15,6 +15,7 @@ import { useState } from "react";
 import { useSessionDetail } from "@/api/hooks/useSessionDetail";
 import { PageLoader } from "@/components/shared/LoadingSpinner";
 import { ModelBadge } from "@/components/shared/ModelBadge";
+import { BillingBadge } from "@/components/shared/BillingBadge";
 import { GlassCard } from "@/components/shared/GlassCard";
 import {
   formatCost,
@@ -207,6 +208,10 @@ function MetaPanel({ session }: { session: SessionData }) {
           {session.entrypoints[0] && (
             <Row label="Via" value={session.entrypoints[0]} />
           )}
+          <div className="flex items-center justify-between gap-2 pt-0.5">
+            <span className="text-white/35">Billing</span>
+            <BillingBadge source={session.billingSource} />
+          </div>
         </div>
       </GlassCard>
 
