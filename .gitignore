@@ -13,3 +13,7 @@ server/dist/
 
 # Playwright MCP test artifacts
 .playwright-mcp/
+
+# Local marketing / social content (keep off GitHub)
+docs/linkedin-post.html
+*.png
