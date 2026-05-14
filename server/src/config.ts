@@ -16,6 +16,14 @@ export const PORT = parseInt(process.env.PORT ?? "3001", 10);
 export const CACHE_TTL_MS =
   parseInt(process.env.CACHE_TTL_SECONDS ?? "60", 10) * 1000;
 
+// 'api' when ANTHROPIC_API_KEY is set — direct per-token billing.
+// 'subscription' when using claude login OAuth — Pro/Max/Free plan.
+// We can't distinguish Pro vs Max vs Free from JSONL data alone.
+export const BILLING_MODE: "api" | "subscription" = process.env
+  .ANTHROPIC_API_KEY
+  ? "api"
+  : "subscription";
+
 export interface ModelPricing {
   input: number;
   output: number;

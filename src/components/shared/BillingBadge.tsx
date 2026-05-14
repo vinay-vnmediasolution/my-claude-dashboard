@@ -15,9 +15,10 @@ const BILLING_CONFIG: Record<
     title: "Claude Max subscription",
   },
   pro: {
-    label: "Pro",
+    label: "Subscription",
     color: "#6366f1",
-    title: "Claude Pro subscription",
+    title:
+      "Claude subscription (Pro/Max/Free — plan not detectable from usage data)",
   },
   free: {
     label: "Free",

@@ -3,10 +3,10 @@ import { formatCost } from "@/lib/formatters";
 import type { BillingBreakdownEntry } from "@/api/hooks/types";
 
 const SOURCE_LABEL: Record<string, string> = {
-  api: "Direct API key — costs are real per-token charges",
-  max: "Claude Max subscription — token costs shown are API-equivalent estimates",
-  pro: "Claude Pro subscription — token costs shown are API-equivalent estimates",
-  free: "Free tier — token costs shown are API-equivalent estimates",
+  api: "Direct API key — costs shown are real per-token charges",
+  max: "Claude Max subscription — costs shown are API-equivalent estimates, not actual charges",
+  pro: "Claude subscription — costs shown are API-equivalent estimates, not actual charges",
+  free: "Free tier — costs shown are API-equivalent estimates, not actual charges",
   unknown: "Billing source could not be determined",
 };
 

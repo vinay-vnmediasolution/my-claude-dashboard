@@ -1,6 +1,7 @@
 import path from "path";
 import { readAllJsonlLines } from "./jsonlReader.js";
 import { computeMessageCost } from "../processors/costCalculator.js";
+import { BILLING_MODE } from "../config.js";
 import type {
   SessionData,
   ParsedMessage,
@@ -18,7 +19,6 @@ interface RawEntry {
   gitBranch?: string;
   entrypoint?: string;
   attributionSkill?: string;
-  userType?: string;
   // user entries
   message?: RawUserMessage | RawAssistantMessage;
   // ai-title
@@ -74,17 +74,13 @@ function extractTools(
     .map((b) => ({ name: b.name!, input: b.input }));
 }
 
-function deriveBillingSource(
-  userTypes: Set<string>,
-  serviceTiers: Set<string>,
-): BillingSource {
-  if (userTypes.has("external")) return "api";
-  if (serviceTiers.has("priority")) return "max";
-  if (userTypes.has("max")) return "max";
-  if (userTypes.has("pro")) return "pro";
-  if (userTypes.has("free")) return "free";
-  if (userTypes.size > 0) return "pro"; // non-external userType = subscription
-  return "unknown";
+function deriveBillingSource(_serviceTiers: Set<string>): BillingSource {
+  // ANTHROPIC_API_KEY present → direct per-token API billing.
+  // Absent → subscription (claude login OAuth). We can't distinguish
+  // Pro/Max/Free from JSONL data alone; surface_tier 'priority' hints at Max.
+  if (BILLING_MODE === "api") return "api";
+  if (_serviceTiers.has("priority")) return "max";
+  return "pro"; // subscription but can't confirm Pro vs Max vs Free
 }
 
 function deriveProjectName(cwd: string): string {
@@ -112,7 +108,6 @@ export async function parseSession(
   const entrypoints = new Set<string>();
   const skills = new Set<string>();
   const gitBranches = new Set<string>();
-  const userTypes = new Set<string>();
   const serviceTiers = new Set<string>();
   const toolUsage: Record<string, number> = {};
   let totalInputTokens = 0;
@@ -137,7 +132,6 @@ export async function parseSession(
     if (entry.entrypoint) entrypoints.add(entry.entrypoint);
     if (entry.gitBranch) gitBranches.add(entry.gitBranch);
     if (entry.attributionSkill) skills.add(entry.attributionSkill);
-    if (entry.userType) userTypes.add(entry.userType);
 
     const entryType = entry.type;
 
@@ -250,7 +244,7 @@ export async function parseSession(
     totalCacheCreateTokens,
     totalCacheReadTokens,
     estimatedCost: totalCost,
-    billingSource: deriveBillingSource(userTypes, serviceTiers),
+    billingSource: deriveBillingSource(serviceTiers),
   };
 
   return { session, messages };
