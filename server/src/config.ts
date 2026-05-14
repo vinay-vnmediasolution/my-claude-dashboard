@@ -16,13 +16,12 @@ export const PORT = parseInt(process.env.PORT ?? "3001", 10);
 export const CACHE_TTL_MS =
   parseInt(process.env.CACHE_TTL_SECONDS ?? "60", 10) * 1000;
 
-// 'api' when ANTHROPIC_API_KEY is set — direct per-token billing.
-// 'subscription' when using claude login OAuth — Pro/Max/Free plan.
-// We can't distinguish Pro vs Max vs Free from JSONL data alone.
-export const BILLING_MODE: "api" | "subscription" = process.env
-  .ANTHROPIC_API_KEY
-  ? "api"
-  : "subscription";
+// Optional ISO date (YYYY-MM-DD) marking when you switched to API billing.
+// Sessions on/after this date are labelled "api"; earlier ones use subscription
+// detection from the JSONL service_tier field. Leave unset if you only ever
+// used a subscription plan.
+export const BILLING_API_START_DATE: string | undefined =
+  process.env.BILLING_API_START_DATE || undefined;
 
 export interface ModelPricing {
   input: number;

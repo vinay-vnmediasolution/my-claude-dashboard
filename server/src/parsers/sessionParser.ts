@@ -1,7 +1,7 @@
 import path from "path";
 import { readAllJsonlLines } from "./jsonlReader.js";
 import { computeMessageCost } from "../processors/costCalculator.js";
-import { BILLING_MODE } from "../config.js";
+import { BILLING_API_START_DATE } from "../config.js";
 import type {
   SessionData,
   ParsedMessage,
@@ -74,13 +74,19 @@ function extractTools(
     .map((b) => ({ name: b.name!, input: b.input }));
 }
 
-function deriveBillingSource(_serviceTiers: Set<string>): BillingSource {
-  // ANTHROPIC_API_KEY present → direct per-token API billing.
-  // Absent → subscription (claude login OAuth). We can't distinguish
-  // Pro/Max/Free from JSONL data alone; surface_tier 'priority' hints at Max.
-  if (BILLING_MODE === "api") return "api";
-  if (_serviceTiers.has("priority")) return "max";
-  return "pro"; // subscription but can't confirm Pro vs Max vs Free
+function deriveBillingSource(
+  serviceTiers: Set<string>,
+  sessionStart: string,
+): BillingSource {
+  // If the user configured an API start date and this session falls on/after it,
+  // treat it as direct API billing. The presence of ANTHROPIC_API_KEY in the
+  // environment is NOT a reliable signal — it may be set for app development
+  // while Claude Code itself still runs on a subscription via OAuth.
+  if (BILLING_API_START_DATE && sessionStart >= BILLING_API_START_DATE) {
+    return "api";
+  }
+  if (serviceTiers.has("priority")) return "max";
+  return "pro";
 }
 
 const UUID_RE =
@@ -267,7 +273,7 @@ export async function parseSession(
     totalCacheCreateTokens,
     totalCacheReadTokens,
     estimatedCost: totalCost,
-    billingSource: deriveBillingSource(serviceTiers),
+    billingSource: deriveBillingSource(serviceTiers, startTime),
   };
 
   return { session, messages };
