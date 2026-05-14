@@ -1,0 +1,169 @@
+export interface RawAssistantUsage {
+  input_tokens: number;
+  output_tokens: number;
+  cache_creation_input_tokens: number;
+  cache_read_input_tokens: number;
+}
+
+export interface ParsedMessage {
+  uuid: string;
+  parentUuid: string | null;
+  type: "user" | "assistant";
+  timestamp: string;
+  sessionId: string;
+  cwd: string;
+  gitBranch?: string;
+  entrypoint?: string;
+  attributionSkill?: string;
+  // user only
+  userText?: string;
+  // assistant only
+  model?: string;
+  usage?: RawAssistantUsage;
+  cost?: number;
+  tools?: Array<{ name: string; input?: Record<string, unknown> }>;
+  hasThinking?: boolean;
+  textContent?: string;
+}
+
+export interface SessionData {
+  sessionId: string;
+  projectDirKey: string;
+  projectPath: string;
+  projectName: string;
+  aiTitle?: string;
+  firstUserMessage?: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  userMessageCount: number;
+  assistantMessageCount: number;
+  models: string[];
+  entrypoints: string[];
+  skills: string[];
+  gitBranches: string[];
+  toolUsage: Record<string, number>;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCacheCreateTokens: number;
+  totalCacheReadTokens: number;
+  estimatedCost: number;
+}
+
+export interface HeatmapEntry {
+  date: string;
+  count: number;
+}
+
+export interface HourlyEntry {
+  hour: number;
+  messages: number;
+  cost: number;
+}
+
+export interface ProjectSummary {
+  name: string;
+  path: string;
+  sessions: number;
+  cost: number;
+  messages: number;
+  outputTokens: number;
+}
+
+export interface ModelSummary {
+  model: string;
+  sessions: number;
+  cost: number;
+  outputTokens: number;
+  inputTokens: number;
+}
+
+export interface OverviewStats {
+  totalSessions: number;
+  totalUserMessages: number;
+  totalAssistantMessages: number;
+  totalCost: number;
+  activeDays: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCacheReadTokens: number;
+  totalCacheCreateTokens: number;
+  cacheHitRate: number;
+  heatmapData: HeatmapEntry[];
+  hourlyData: HourlyEntry[];
+  topProjects: ProjectSummary[];
+  modelBreakdown: ModelSummary[];
+  firstSessionDate: string;
+  lastSessionDate: string;
+}
+
+export interface TokenTimelineEntry {
+  date: string;
+  input: number;
+  output: number;
+  cacheCreate: number;
+  cacheRead: number;
+  cost: number;
+}
+
+export interface ToolBreakdownEntry {
+  tool: string;
+  count: number;
+  pct: number;
+}
+
+export interface CacheMetrics {
+  totalCacheRead: number;
+  totalCacheCreate: number;
+  hitRate: number;
+  savingsUSD: number;
+}
+
+export interface AnalyticsData {
+  tokenTimeline: TokenTimelineEntry[];
+  toolBreakdown: ToolBreakdownEntry[];
+  cacheMetrics: CacheMetrics;
+  costByProject: Array<{
+    project: string;
+    cost: number;
+    inputCost: number;
+    outputCost: number;
+    cacheCost: number;
+  }>;
+  costByModel: ModelSummary[];
+}
+
+export interface PeakHour {
+  hour: number;
+  score: number;
+  label: string;
+}
+
+export interface InsightsData {
+  peakHours: PeakHour[];
+  currentStreak: number;
+  longestStreak: number;
+  mostUsedTools: ToolBreakdownEntry[];
+  cacheSavingsUSD: number;
+  favoriteProjects: Array<{
+    name: string;
+    sessions: number;
+    totalHours: number;
+    totalCost: number;
+  }>;
+  averageSessionDuration: number;
+  averageMessagesPerSession: number;
+  mostProductiveDay: string;
+  skillsUsed: Array<{ skill: string; count: number }>;
+  totalActiveDays: number;
+  longestSession: {
+    sessionId: string;
+    durationMinutes: number;
+    projectName: string;
+  };
+  mostExpensiveSession: {
+    sessionId: string;
+    cost: number;
+    projectName: string;
+  };
+}

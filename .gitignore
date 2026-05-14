@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+*.local
+
+# Never commit user session data
+*.jsonl
+/data/
+
+# Build artifacts
+server/dist/
+.DS_Store
+
+# Playwright MCP test artifacts
+.playwright-mcp/
