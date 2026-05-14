@@ -6,6 +6,7 @@ import { HourlyChart } from "./HourlyChart";
 import { TopProjects } from "./TopProjects";
 import { ModelBreakdown } from "./ModelBreakdown";
 import { BillingSourceBar } from "./BillingSourceBar";
+import { AccessModeBreakdown } from "./AccessModeBreakdown";
 
 export function Overview() {
   const { data, isLoading, error } = useOverview();
@@ -47,7 +48,10 @@ export function Overview() {
         <ModelBreakdown data={data.modelBreakdown} totalCost={data.totalCost} />
       </div>
 
-      <TopProjects data={data.topProjects} />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <TopProjects data={data.topProjects} />
+        <AccessModeBreakdown data={data.accessModeBreakdown} />
+      </div>
     </div>
   );
 }

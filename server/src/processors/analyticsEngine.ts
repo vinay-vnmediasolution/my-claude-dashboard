@@ -13,6 +13,8 @@ import type {
   ToolBreakdownEntry,
   CacheMetrics,
   BillingBreakdownEntry,
+  AccessMode,
+  AccessModeEntry,
 } from "../types/index.js";
 
 const DAYS_OF_WEEK = [
@@ -141,6 +143,77 @@ function buildBillingBreakdown(
   return [...map.values()].sort((a, b) => b.sessions - a.sessions);
 }
 
+const ACCESS_MODE_META: Record<
+  AccessMode,
+  { label: string; description: string }
+> = {
+  "claude-code": {
+    label: "Claude Code",
+    description: "Terminal CLI — agentic coding, file edits, shell commands",
+  },
+  "claude-code-sdk": {
+    label: "Claude Code (SDK)",
+    description: "Claude Code via SDK integration or programmatic invocation",
+  },
+  api: {
+    label: "Direct API",
+    description: "Per-token API key billing — custom apps and integrations",
+  },
+  "claude-ai-pro": {
+    label: "Claude.ai Pro",
+    description: "claude.ai web/desktop — co-work, chat, projects, artifacts",
+  },
+  "claude-ai-max": {
+    label: "Claude.ai Max",
+    description: "Claude Max subscription — higher limits on claude.ai",
+  },
+  "claude-ai-free": {
+    label: "Claude.ai Free",
+    description: "Free-tier access via claude.ai",
+  },
+  unknown: {
+    label: "Unknown",
+    description: "Access method could not be determined",
+  },
+};
+
+function deriveAccessMode(session: SessionData): AccessMode {
+  const eps = session.entrypoints;
+  if (eps.includes("sdk-cli")) return "claude-code-sdk";
+  if (eps.includes("cli")) return "claude-code";
+  if (session.billingSource === "api") return "api";
+  if (session.billingSource === "max") return "claude-ai-max";
+  if (session.billingSource === "pro") return "claude-ai-pro";
+  if (session.billingSource === "free") return "claude-ai-free";
+  return "unknown";
+}
+
+function buildAccessModeBreakdown(sessions: SessionData[]): AccessModeEntry[] {
+  const map = new Map<AccessMode, AccessModeEntry>();
+
+  for (const s of sessions) {
+    const mode = deriveAccessMode(s);
+    const existing = map.get(mode);
+    if (existing) {
+      existing.sessions++;
+      existing.cost += s.estimatedCost;
+      existing.messages += s.userMessageCount;
+    } else {
+      const meta = ACCESS_MODE_META[mode];
+      map.set(mode, {
+        mode,
+        label: meta.label,
+        description: meta.description,
+        sessions: 1,
+        cost: s.estimatedCost,
+        messages: s.userMessageCount,
+      });
+    }
+  }
+
+  return [...map.values()].sort((a, b) => b.sessions - a.sessions);
+}
+
 export function buildOverviewStats(sessions: SessionData[]): OverviewStats {
   const activeDates = new Set(sessions.map((s) => s.startTime.slice(0, 10)));
   const totalCost = sessions.reduce((sum, s) => sum + s.estimatedCost, 0);
@@ -183,6 +256,7 @@ export function buildOverviewStats(sessions: SessionData[]): OverviewStats {
     firstSessionDate: sortedSessions[0]?.startTime ?? "",
     lastSessionDate: sortedSessions[sortedSessions.length - 1]?.startTime ?? "",
     billingBreakdown: buildBillingBreakdown(sessions),
+    accessModeBreakdown: buildAccessModeBreakdown(sessions),
   };
 }
 

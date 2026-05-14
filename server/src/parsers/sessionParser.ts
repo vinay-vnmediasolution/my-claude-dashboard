@@ -83,11 +83,34 @@ function deriveBillingSource(_serviceTiers: Set<string>): BillingSource {
   return "pro"; // subscription but can't confirm Pro vs Max vs Free
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SKIP_SEGMENTS = new Set([
+  "workspaces",
+  "instances",
+  "default",
+  "support",
+  "library",
+  "application",
+]);
+
+function toTitleCase(seg: string): string {
+  return seg
+    .split(/[-_ ]+/)
+    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ""))
+    .join(" ")
+    .trim();
+}
+
 function deriveProjectName(cwd: string): string {
   const parts = cwd.split("/").filter(Boolean);
-  if (parts.length >= 2)
-    return `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
-  return parts[parts.length - 1] ?? cwd;
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const seg = parts[i];
+    if (!UUID_RE.test(seg) && !SKIP_SEGMENTS.has(seg.toLowerCase())) {
+      return toTitleCase(seg);
+    }
+  }
+  return toTitleCase(parts[parts.length - 1] ?? cwd);
 }
 
 export async function parseSession(

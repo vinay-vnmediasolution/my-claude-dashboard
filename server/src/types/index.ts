@@ -61,6 +61,24 @@ export interface BillingBreakdownEntry {
   messages: number;
 }
 
+export type AccessMode =
+  | "claude-code"
+  | "claude-code-sdk"
+  | "api"
+  | "claude-ai-pro"
+  | "claude-ai-max"
+  | "claude-ai-free"
+  | "unknown";
+
+export interface AccessModeEntry {
+  mode: AccessMode;
+  label: string;
+  description: string;
+  sessions: number;
+  cost: number;
+  messages: number;
+}
+
 export interface HeatmapEntry {
   date: string;
   count: number;
@@ -107,6 +125,7 @@ export interface OverviewStats {
   firstSessionDate: string;
   lastSessionDate: string;
   billingBreakdown: BillingBreakdownEntry[];
+  accessModeBreakdown: AccessModeEntry[];
 }
 
 export interface TokenTimelineEntry {
