@@ -13,6 +13,8 @@ export function HeroStats({ data }: HeroStatsProps) {
       <StatCard
         label="Total Sessions"
         value={String(data.totalSessions)}
+        numericValue={data.totalSessions}
+        formatter={(n) => String(Math.round(n))}
         subValue={`${data.activeDays} active days`}
         icon={Layers}
         iconColor="#6366f1"
@@ -21,6 +23,8 @@ export function HeroStats({ data }: HeroStatsProps) {
       <StatCard
         label="User Messages"
         value={String(data.totalUserMessages)}
+        numericValue={data.totalUserMessages}
+        formatter={(n) => String(Math.round(n))}
         subValue={`${data.totalAssistantMessages} responses`}
         icon={MessageSquare}
         iconColor="#8b5cf6"
@@ -29,6 +33,8 @@ export function HeroStats({ data }: HeroStatsProps) {
       <StatCard
         label="Total Cost"
         value={formatCost(data.totalCost)}
+        numericValue={data.totalCost}
+        formatter={formatCost}
         subValue={`${formatTokens(data.totalOutputTokens)} output tokens`}
         icon={DollarSign}
         iconColor="#06b6d4"

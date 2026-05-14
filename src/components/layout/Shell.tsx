@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -74,9 +75,11 @@ function Clock() {
 export function Shell() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const queryClient = useQueryClient();
 
   const handleCacheInvalidate = async () => {
     await fetch("/api/cache/invalidate", { method: "POST" });
+    queryClient.clear();
     window.location.reload();
   };
 

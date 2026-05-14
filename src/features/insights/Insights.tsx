@@ -179,8 +179,9 @@ export function Insights() {
               vs paying full input token price
             </div>
             <div className="rounded-xl bg-emerald-500/[0.08] border border-emerald-500/15 p-3 text-xs text-emerald-300/70">
-              Prompt caching dramatically reduces costs on long conversations.
-              Your 92% cache hit rate is excellent.
+              Prompt caching reduces costs on long conversations. You&apos;ve
+              saved {formatCost(data.cacheSavingsUSD)} vs paying full input
+              token prices.
             </div>
           </GlassCard>
         </motion.div>

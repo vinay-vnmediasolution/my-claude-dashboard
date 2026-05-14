@@ -1,18 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../client";
-import type { SessionsResponse } from "./types";
-
-interface SessionsParams {
-  page?: number;
-  limit?: number;
-  project?: string;
-  model?: string;
-  from?: string;
-  to?: string;
-  search?: string;
-  sortBy?: string;
-  sortDir?: "asc" | "desc";
-}
+import { queryKeys } from "../queryKeys";
+import type { SessionsParams, SessionsResponse } from "./types";
 
 export function useSessions(params: SessionsParams = {}) {
   const searchParams = new URLSearchParams();
@@ -29,8 +18,7 @@ export function useSessions(params: SessionsParams = {}) {
   const qs = searchParams.toString();
 
   return useQuery<SessionsResponse>({
-    queryKey: ["sessions", params],
+    queryKey: queryKeys.sessions(params),
     queryFn: () => apiFetch<SessionsResponse>(`/sessions${qs ? `?${qs}` : ""}`),
-    staleTime: 30_000,
   });
 }

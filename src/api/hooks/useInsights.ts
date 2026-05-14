@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../client";
+import { queryKeys } from "../queryKeys";
 import type { InsightsData } from "./types";
 
 export function useInsights() {
   return useQuery<InsightsData>({
-    queryKey: ["insights"],
+    queryKey: queryKeys.insights(),
     queryFn: () => apiFetch<InsightsData>("/insights"),
-    staleTime: 60_000,
   });
 }

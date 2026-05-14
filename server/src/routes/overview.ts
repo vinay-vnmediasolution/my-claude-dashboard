@@ -1,18 +1,13 @@
 import { Router } from "express";
 import { dataCache } from "../cache/dataCache.js";
-import { loadAllSessions } from "../processors/sessionAggregator.js";
+import { getSessions } from "../utils/sessionCache.js";
 import { buildOverviewStats } from "../processors/analyticsEngine.js";
 
 export const overviewRouter = Router();
 
 overviewRouter.get("/", async (_req, res) => {
   try {
-    let sessions =
-      dataCache.get<Awaited<ReturnType<typeof loadAllSessions>>>("sessions");
-    if (!sessions) {
-      sessions = await loadAllSessions();
-      dataCache.set("sessions", sessions);
-    }
+    const sessions = await getSessions();
 
     const cacheKey = "overview";
     let stats = dataCache.get<ReturnType<typeof buildOverviewStats>>(cacheKey);

@@ -6,6 +6,8 @@ import type { LucideIcon } from "lucide-react";
 interface StatCardProps {
   label: string;
   value: string;
+  numericValue?: number;
+  formatter?: (n: number) => string;
   subValue?: string;
   icon: LucideIcon;
   iconColor?: string;
@@ -22,12 +24,12 @@ function AnimatedNumber({
 }) {
   const motionVal = useMotionValue(0);
   const spring = useSpring(motionVal, { stiffness: 80, damping: 20 });
-  const display = useTransform(spring, (v) => formatter(v));
-  const ref = useRef(false);
+  const display = useTransform(spring, formatter);
+  const hasRun = useRef(false);
 
   useEffect(() => {
-    if (!ref.current) {
-      ref.current = true;
+    if (!hasRun.current) {
+      hasRun.current = true;
       motionVal.set(target);
     }
   }, [target, motionVal]);
@@ -38,14 +40,15 @@ function AnimatedNumber({
 export function StatCard({
   label,
   value,
+  numericValue,
+  formatter,
   subValue,
   icon: Icon,
   iconColor = "#6366f1",
   trend,
   delay = 0,
 }: StatCardProps) {
-  const numericVal = parseFloat(value.replace(/[^0-9.]/g, ""));
-  const hasAnimation = !isNaN(numericVal) && numericVal < 100_000;
+  const canAnimate = numericValue !== undefined && formatter !== undefined;
 
   return (
     <motion.div
@@ -54,7 +57,6 @@ export function StatCard({
       transition={{ duration: 0.4, delay }}
     >
       <GlassCard hover glow className="relative overflow-hidden">
-        {/* Subtle top gradient accent */}
         <div
           className="absolute inset-x-0 top-0 h-px"
           style={{
@@ -83,8 +85,8 @@ export function StatCard({
 
         <div className="mt-4">
           <div className="text-3xl font-bold tracking-tight text-white">
-            {hasAnimation ? (
-              <AnimatedNumber target={numericVal} formatter={() => value} />
+            {canAnimate ? (
+              <AnimatedNumber target={numericValue} formatter={formatter} />
             ) : (
               value
             )}

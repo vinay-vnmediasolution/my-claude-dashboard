@@ -1,3 +1,15 @@
+export interface SessionsParams {
+  page?: number;
+  limit?: number;
+  project?: string;
+  model?: string;
+  from?: string;
+  to?: string;
+  search?: string;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
+}
+
 export interface RawAssistantUsage {
   input_tokens: number;
   output_tokens: number;

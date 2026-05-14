@@ -9,43 +9,59 @@ export interface LoadedSession {
   messages: ParsedMessage[];
 }
 
+let inflightLoad: Promise<LoadedSession[]> | null = null;
+
 export async function loadAllSessions(): Promise<LoadedSession[]> {
+  if (inflightLoad) return inflightLoad;
+  inflightLoad = doLoadAllSessions().finally(() => {
+    inflightLoad = null;
+  });
+  return inflightLoad;
+}
+
+async function doLoadAllSessions(): Promise<LoadedSession[]> {
   const projectsDir = path.join(CLAUDE_DIR, "projects");
 
-  if (!fs.existsSync(projectsDir)) {
+  try {
+    await fs.promises.access(projectsDir);
+  } catch {
     console.warn(`Projects directory not found: ${projectsDir}`);
     return [];
   }
 
-  const loaded: LoadedSession[] = [];
-  const projectDirs = fs
-    .readdirSync(projectsDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory());
+  const projectDirs = (
+    await fs.promises.readdir(projectsDir, { withFileTypes: true })
+  ).filter((d) => d.isDirectory());
 
-  for (const projectDir of projectDirs) {
-    const projectPath = path.join(projectsDir, projectDir.name);
-    const files = fs
-      .readdirSync(projectPath)
-      .filter((f) => f.endsWith(".jsonl"));
+  const perProjectResults = await Promise.all(
+    projectDirs.map(async (projectDir) => {
+      const projectPath = path.join(projectsDir, projectDir.name);
+      const files = (await fs.promises.readdir(projectPath)).filter((f) =>
+        f.endsWith(".jsonl"),
+      );
 
-    for (const file of files) {
-      const filePath = path.join(projectPath, file);
-      try {
-        const result = await parseSession(filePath, projectDir.name);
-        // Only include sessions with actual messages
-        if (
-          result.session.userMessageCount > 0 ||
-          result.session.assistantMessageCount > 0
-        ) {
-          loaded.push(result);
+      const settled = await Promise.allSettled(
+        files.map((file) =>
+          parseSession(path.join(projectPath, file), projectDir.name),
+        ),
+      );
+
+      const loaded: LoadedSession[] = [];
+      for (const result of settled) {
+        if (result.status === "rejected") {
+          console.warn("Failed to parse session:", result.reason);
+          continue;
         }
-      } catch (err) {
-        console.warn(`Failed to parse ${filePath}:`, err);
+        const { session, messages } = result.value;
+        if (session.userMessageCount > 0 || session.assistantMessageCount > 0) {
+          loaded.push({ session, messages });
+        }
       }
-    }
-  }
+      return loaded;
+    }),
+  );
 
-  // Sort sessions newest first
-  loaded.sort((a, b) => b.session.startTime.localeCompare(a.session.startTime));
-  return loaded;
+  const all = perProjectResults.flat();
+  all.sort((a, b) => b.session.startTime.localeCompare(a.session.startTime));
+  return all;
 }

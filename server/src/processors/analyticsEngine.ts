@@ -1,5 +1,6 @@
 import { format, subDays, parseISO, differenceInDays, getDay } from "date-fns";
 import { computeCacheSavings } from "./costCalculator.js";
+import { MODEL_PRICING, DEFAULT_PRICING } from "../config.js";
 import type {
   SessionData,
   OverviewStats,
@@ -328,12 +329,17 @@ export function buildAnalyticsData(
   );
   const totalInput = filtered.reduce((sum, s) => sum + s.totalInputTokens, 0);
   const totalEffective = totalInput + totalCacheRead + totalCacheCreate;
-  const primaryModel = filtered[0]?.models[0] ?? "claude-sonnet-4-6";
+  // Compute savings per session using its own model's pricing, then sum
+  const savingsUSD = filtered.reduce(
+    (sum, s) =>
+      sum + computeCacheSavings(s.totalCacheReadTokens, s.models[0] ?? ""),
+    0,
+  );
   const cacheMetrics: CacheMetrics = {
     totalCacheRead,
     totalCacheCreate,
     hitRate: totalEffective > 0 ? totalCacheRead / totalEffective : 0,
-    savingsUSD: computeCacheSavings(totalCacheRead, primaryModel),
+    savingsUSD,
   };
 
   // Cost by project
@@ -343,8 +349,9 @@ export function buildAnalyticsData(
   >();
   for (const s of filtered) {
     const existing = projectCostMap.get(s.projectName);
-    const inputCost = (s.totalInputTokens * 3) / 1_000_000;
-    const outputCost = (s.totalOutputTokens * 15) / 1_000_000;
+    const pricing = MODEL_PRICING[s.models[0] ?? ""] ?? DEFAULT_PRICING;
+    const inputCost = (s.totalInputTokens * pricing.input) / 1_000_000;
+    const outputCost = (s.totalOutputTokens * pricing.output) / 1_000_000;
     const cacheCost = s.estimatedCost - inputCost - outputCost;
     if (existing) {
       existing.cost += s.estimatedCost;
@@ -381,6 +388,8 @@ export function computeStreaks(sessions: SessionData[]): {
 } {
   const activeDates = new Set(sessions.map((s) => s.startTime.slice(0, 10)));
   const sorted = [...activeDates].sort();
+
+  if (sorted.length === 0) return { current: 0, longest: 0 };
 
   let longest = 0;
   let current = 1;

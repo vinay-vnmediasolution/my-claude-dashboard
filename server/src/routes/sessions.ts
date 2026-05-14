@@ -1,18 +1,11 @@
 import { Router } from "express";
-import { dataCache } from "../cache/dataCache.js";
-import { loadAllSessions } from "../processors/sessionAggregator.js";
+import { getSessions } from "../utils/sessionCache.js";
 
 export const sessionsRouter = Router();
 
 sessionsRouter.get("/", async (req, res) => {
   try {
-    let sessions =
-      dataCache.get<Awaited<ReturnType<typeof loadAllSessions>>>("sessions");
-    if (!sessions) {
-      sessions = await loadAllSessions();
-      dataCache.set("sessions", sessions);
-    }
-
+    const sessions = await getSessions();
     let items = sessions.map((s) => s.session);
 
     const { project, model, from, to, search } = req.query as Record<
@@ -74,13 +67,7 @@ sessionsRouter.get("/", async (req, res) => {
 
 sessionsRouter.get("/:sessionId", async (req, res) => {
   try {
-    let sessions =
-      dataCache.get<Awaited<ReturnType<typeof loadAllSessions>>>("sessions");
-    if (!sessions) {
-      sessions = await loadAllSessions();
-      dataCache.set("sessions", sessions);
-    }
-
+    const sessions = await getSessions();
     const found = sessions.find(
       (s) => s.session.sessionId === req.params.sessionId,
     );
@@ -88,7 +75,6 @@ sessionsRouter.get("/:sessionId", async (req, res) => {
       res.status(404).json({ error: "Session not found" });
       return;
     }
-
     res.json({ session: found.session, messages: found.messages });
   } catch (err) {
     console.error("Session detail route error:", err);
