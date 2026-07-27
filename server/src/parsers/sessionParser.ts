@@ -30,7 +30,7 @@ interface RawEntry {
 
 interface RawUserMessage {
   role: "user";
-  content: string | Array<{ type: string; text?: string }>;
+  content: string | RawContentBlock[];
 }
 
 /**
@@ -43,6 +43,25 @@ function isToolResultMessage(message: RawUserMessage): boolean {
     Array.isArray(message.content) &&
     message.content.some((b) => b.type === "tool_result")
   );
+}
+
+/**
+ * Failed tool results carry is_error: true. The field is omitted entirely on
+ * success, so only an explicit true counts as a failure. The result names the
+ * tool only by tool_use_id, so attribution depends on the id -> name map built
+ * from the assistant's tool_use blocks earlier in the transcript.
+ */
+function collectToolErrors(
+  message: RawUserMessage,
+  toolNamesById: Map<string, string>,
+  toolErrors: Record<string, number>,
+): void {
+  if (!Array.isArray(message.content)) return;
+  for (const block of message.content) {
+    if (block.type !== "tool_result" || block.is_error !== true) continue;
+    const name = toolNamesById.get(block.tool_use_id ?? "") ?? "unknown";
+    toolErrors[name] = (toolErrors[name] ?? 0) + 1;
+  }
 }
 
 interface RawAssistantMessage {
@@ -58,6 +77,11 @@ interface RawContentBlock {
   name?: string;
   input?: Record<string, unknown>;
   thinking?: string;
+  // tool_use
+  id?: string;
+  // tool_result
+  tool_use_id?: string;
+  is_error?: boolean;
 }
 
 function extractUserText(message: RawUserMessage): string {
@@ -159,6 +183,8 @@ export async function parseSession(
   const gitBranches = new Set<string>();
   const serviceTiers = new Set<string>();
   const toolUsage: Record<string, number> = {};
+  const toolErrors: Record<string, number> = {};
+  const toolNamesById = new Map<string, string>();
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
   let totalCacheCreateTokens = 0;
@@ -198,6 +224,7 @@ export async function parseSession(
       const isToolResult = isToolResultMessage(userMessage);
       if (isToolResult) {
         toolResultCount++;
+        collectToolErrors(userMessage, toolNamesById, toolErrors);
       } else {
         userMessageCount++;
       }
@@ -250,6 +277,13 @@ export async function parseSession(
       tools.forEach((t) => {
         toolUsage[t.name] = (toolUsage[t.name] ?? 0) + 1;
       });
+      // tool_use always precedes its tool_result in the transcript, so this map
+      // is populated by the time the matching result is read.
+      for (const block of content) {
+        if (block.type === "tool_use" && block.id && block.name) {
+          toolNamesById.set(block.id, block.name);
+        }
+      }
 
       const hasThinking = content.some((b) => b.type === "thinking");
       const textContent = extractAssistantText(content);
@@ -299,6 +333,7 @@ export async function parseSession(
     skills: [...skills],
     gitBranches: [...gitBranches],
     toolUsage,
+    toolErrors,
     totalInputTokens,
     totalOutputTokens,
     totalCacheCreateTokens,

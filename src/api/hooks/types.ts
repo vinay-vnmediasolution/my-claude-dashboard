@@ -165,6 +165,9 @@ export interface ToolBreakdownEntry {
   tool: string;
   count: number;
   pct: number;
+  errors: number;
+  /** Failed calls as a fraction of this tool's total calls (0-1). */
+  errorRate: number;
 }
 
 export interface CacheMetrics {

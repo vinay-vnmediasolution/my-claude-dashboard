@@ -207,12 +207,24 @@ export function Analytics() {
                     tool: string;
                     count: number;
                     pct: number;
+                    errors: number;
+                    errorRate: number;
                   };
                   return (
                     <div className="rounded-xl border border-white/10 bg-[#0f0f1a]/95 p-3 text-xs backdrop-blur">
                       <div className="font-semibold text-white">{d.tool}</div>
                       <div className="text-white/60 mt-1">
                         {d.count.toLocaleString()} calls · {d.pct}%
+                      </div>
+                      <div
+                        className={
+                          d.errors > 0
+                            ? "mt-0.5 text-amber-300/90"
+                            : "mt-0.5 text-white/40"
+                        }
+                      >
+                        {d.errors.toLocaleString()} failed ·{" "}
+                        {(d.errorRate * 100).toFixed(1)}%
                       </div>
                     </div>
                   );

@@ -35,6 +35,37 @@ function hourLabel(hour: number): string {
   return `${hour - 12} PM`;
 }
 
+export function buildToolBreakdown(
+  sessions: SessionData[],
+): ToolBreakdownEntry[] {
+  const counts = new Map<string, number>();
+  const errors = new Map<string, number>();
+
+  for (const s of sessions) {
+    for (const [tool, count] of Object.entries(s.toolUsage)) {
+      counts.set(tool, (counts.get(tool) ?? 0) + count);
+    }
+    for (const [tool, count] of Object.entries(s.toolErrors)) {
+      errors.set(tool, (errors.get(tool) ?? 0) + count);
+    }
+  }
+
+  const total = [...counts.values()].reduce((a, b) => a + b, 0);
+
+  return [...counts.entries()]
+    .map(([tool, count]) => {
+      const errorCount = errors.get(tool) ?? 0;
+      return {
+        tool,
+        count,
+        pct: total > 0 ? Math.round((count / total) * 100) : 0,
+        errors: errorCount,
+        errorRate: count > 0 ? errorCount / count : 0,
+      };
+    })
+    .sort((a, b) => b.count - a.count);
+}
+
 export function buildHeatmap(sessions: SessionData[]): HeatmapEntry[] {
   const counts = new Map<string, number>();
   const today = new Date();
@@ -309,21 +340,7 @@ export function buildAnalyticsData(
     }
   }
 
-  // Tool breakdown
-  const toolMap = new Map<string, number>();
-  for (const s of filtered) {
-    for (const [tool, count] of Object.entries(s.toolUsage)) {
-      toolMap.set(tool, (toolMap.get(tool) ?? 0) + count);
-    }
-  }
-  const totalTools = [...toolMap.values()].reduce((a, b) => a + b, 0);
-  const toolBreakdown: ToolBreakdownEntry[] = [...toolMap.entries()]
-    .map(([tool, count]) => ({
-      tool,
-      count,
-      pct: totalTools > 0 ? Math.round((count / totalTools) * 100) : 0,
-    }))
-    .sort((a, b) => b.count - a.count);
+  const toolBreakdown = buildToolBreakdown(filtered);
 
   // Cache metrics
   const totalCacheRead = filtered.reduce(
@@ -432,21 +449,7 @@ export function buildInsightsData(sessions: SessionData[]): InsightsData {
       label: hourLabel(h.hour),
     }));
 
-  const toolMap = new Map<string, number>();
-  for (const s of sessions) {
-    for (const [tool, count] of Object.entries(s.toolUsage)) {
-      toolMap.set(tool, (toolMap.get(tool) ?? 0) + count);
-    }
-  }
-  const totalTools = [...toolMap.values()].reduce((a, b) => a + b, 0);
-  const mostUsedTools: ToolBreakdownEntry[] = [...toolMap.entries()]
-    .map(([tool, count]) => ({
-      tool,
-      count,
-      pct: totalTools > 0 ? Math.round((count / totalTools) * 100) : 0,
-    }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 8);
+  const mostUsedTools = buildToolBreakdown(sessions).slice(0, 8);
 
   const primaryModel = sessions[0]?.models[0] ?? "claude-sonnet-4-6";
   const totalCacheRead = sessions.reduce(

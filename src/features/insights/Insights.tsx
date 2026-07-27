@@ -214,6 +214,14 @@ export function Insights() {
                         <span className="text-xs text-white/70 font-medium">
                           {t.tool}
                         </span>
+                        {t.errors > 0 && (
+                          <span
+                            className="text-[10px] text-amber-300/80"
+                            title={`${t.errors} of ${t.count} calls failed`}
+                          >
+                            {(t.errorRate * 100).toFixed(0)}% failed
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-white/35">
