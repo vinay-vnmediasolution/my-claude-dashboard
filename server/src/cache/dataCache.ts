@@ -30,6 +30,19 @@ class DataCache {
     }
   }
 
+  /** Drop overview, insights, and analytics entries (keeps raw sessions if present). */
+  invalidateDerived(): void {
+    for (const key of this.store.keys()) {
+      if (
+        key === "overview" ||
+        key === "insights" ||
+        key.startsWith("analytics:")
+      ) {
+        this.store.delete(key);
+      }
+    }
+  }
+
   lastSet(key: string): Date | null {
     const entry = this.store.get(key);
     if (!entry) return null;

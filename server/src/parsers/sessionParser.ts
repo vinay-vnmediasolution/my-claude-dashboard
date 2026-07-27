@@ -82,7 +82,10 @@ function deriveBillingSource(
   // treat it as direct API billing. The presence of ANTHROPIC_API_KEY in the
   // environment is NOT a reliable signal — it may be set for app development
   // while Claude Code itself still runs on a subscription via OAuth.
-  if (BILLING_API_START_DATE && sessionStart >= BILLING_API_START_DATE) {
+  if (
+    BILLING_API_START_DATE &&
+    sessionStart.slice(0, 10) >= BILLING_API_START_DATE
+  ) {
     return "api";
   }
   if (serviceTiers.has("priority")) return "max";
