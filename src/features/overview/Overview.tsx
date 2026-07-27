@@ -37,6 +37,20 @@ export function Overview() {
         </p>
       </div>
 
+      {data.unpricedModels.length > 0 && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <p className="text-sm font-medium text-amber-200">
+            Costs are understated for {data.unpricedModels.length} unrecognised{" "}
+            {data.unpricedModels.length === 1 ? "model" : "models"}
+          </p>
+          <p className="mt-1 text-xs text-amber-200/70">
+            {data.unpricedModels.join(", ")} — billed at fallback rates. Add{" "}
+            {data.unpricedModels.length === 1 ? "an entry" : "entries"} to
+            MODEL_PRICING in server/src/config.ts.
+          </p>
+        </div>
+      )}
+
       <HeroStats data={data} />
 
       <BillingSourceBar data={data.billingBreakdown} />

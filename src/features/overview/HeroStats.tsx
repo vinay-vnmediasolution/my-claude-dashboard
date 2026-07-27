@@ -25,7 +25,7 @@ export function HeroStats({ data }: HeroStatsProps) {
         value={String(data.totalUserMessages)}
         numericValue={data.totalUserMessages}
         formatter={(n) => String(Math.round(n))}
-        subValue={`${data.totalAssistantMessages} responses`}
+        subValue={`${data.totalAssistantMessages} responses · ${data.totalToolResults} tool results`}
         icon={MessageSquare}
         iconColor="#8b5cf6"
         delay={0.06}
