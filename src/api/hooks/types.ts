@@ -40,6 +40,7 @@ export interface ParsedMessage {
 }
 
 export interface SessionData {
+  provider: ProviderId;
   sessionId: string;
   projectDirKey: string;
   projectPath: string;
@@ -117,6 +118,15 @@ export interface ModelSummary {
   inputTokens: number;
 }
 
+export type ProviderId = "claude-code" | "codex";
+
+export interface ProviderMeta {
+  id: ProviderId;
+  label: string;
+  available: boolean;
+  sessions: number;
+}
+
 export interface DataCoverage {
   historyAvailable: boolean;
   knownSessions: number;
@@ -129,6 +139,7 @@ export interface DataCoverage {
 
 export interface OverviewStats {
   coverage: DataCoverage;
+  providers: ProviderMeta[];
   totalSessions: number;
   totalUserMessages: number;
   totalToolResults: number;

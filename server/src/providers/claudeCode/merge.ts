@@ -1,4 +1,4 @@
-import type { ParsedMessage, SessionData } from "../types/index.js";
+import type { ParsedMessage, SessionData } from "../../types/index.js";
 
 export function mergeSessionParts(
   sessionId: string,

@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
-import { CLAUDE_DIR } from "../config.js";
-import type { DataCoverage } from "../types/index.js";
+import { CLAUDE_DIR } from "../../config.js";
+import type { DataCoverage } from "../../types/index.js";
 
 interface HistoryEntry {
   sessionId?: string;

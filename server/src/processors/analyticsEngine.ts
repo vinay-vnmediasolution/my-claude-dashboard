@@ -17,6 +17,7 @@ import type {
   AccessMode,
   AccessModeEntry,
   DataCoverage,
+  ProviderMeta,
 } from "../types/index.js";
 
 const DAYS_OF_WEEK = [
@@ -250,6 +251,7 @@ function buildAccessModeBreakdown(sessions: SessionData[]): AccessModeEntry[] {
 export function buildOverviewStats(
   sessions: SessionData[],
   coverage: DataCoverage,
+  providers: ProviderMeta[],
 ): OverviewStats {
   const activeDates = new Set(sessions.map((s) => s.startTime.slice(0, 10)));
   const totalCost = sessions.reduce((sum, s) => sum + s.estimatedCost, 0);
@@ -301,6 +303,7 @@ export function buildOverviewStats(
     billingBreakdown: buildBillingBreakdown(sessions),
     accessModeBreakdown: buildAccessModeBreakdown(sessions),
     coverage,
+    providers,
   };
 }
 
