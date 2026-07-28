@@ -94,6 +94,7 @@ export function mergeSessionParts(
     startTime,
     endTime,
     durationMinutes,
+    activeMinutes: parts.reduce((sum, p) => sum + p.session.activeMinutes, 0),
     userMessageCount,
     toolResultCount,
     assistantMessageCount,

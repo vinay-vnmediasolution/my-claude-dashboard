@@ -40,7 +40,10 @@ export interface SessionData {
   firstUserMessage?: string;
   startTime: string;
   endTime: string;
+  /** Wall-clock span from first to last message, including idle time. */
   durationMinutes: number;
+  /** Time spent actually working, excluding gaps longer than 5 minutes. */
+  activeMinutes: number;
   /** Human-authored turns only — excludes tool-result entries. */
   userMessageCount: number;
   /** Tool-result entries, which the transcript also records with role "user". */
@@ -116,6 +119,22 @@ export interface ModelSummary {
   inputTokens: number;
 }
 
+/**
+ * How much of the user's actual Claude history the dashboard can see. Claude
+ * Code deletes transcripts after cleanupPeriodDays (30 by default), so totals
+ * describe a retention window rather than all-time usage.
+ */
+export interface DataCoverage {
+  /** False when ~/.claude/history.jsonl is unreadable — coverage is unknown. */
+  historyAvailable: boolean;
+  knownSessions: number;
+  sessionsWithTranscript: number;
+  missingTranscripts: number;
+  missingProjects: string[];
+  historyStart: string;
+  earliestSurvivingTranscript: string;
+}
+
 export interface OverviewStats {
   totalSessions: number;
   totalUserMessages: number;
@@ -138,6 +157,7 @@ export interface OverviewStats {
   lastSessionDate: string;
   billingBreakdown: BillingBreakdownEntry[];
   accessModeBreakdown: AccessModeEntry[];
+  coverage: DataCoverage;
 }
 
 export interface TokenTimelineEntry {
@@ -197,8 +217,10 @@ export interface InsightsData {
     totalHours: number;
     totalCost: number;
   }>;
+  /** Mean active minutes per session, excluding idle gaps. */
   averageSessionDuration: number;
   averageMessagesPerSession: number;
+  totalUserMessages: number;
   mostProductiveDay: string;
   skillsUsed: Array<{ skill: string; count: number }>;
   totalActiveDays: number;

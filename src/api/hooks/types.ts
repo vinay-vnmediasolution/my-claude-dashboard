@@ -117,7 +117,18 @@ export interface ModelSummary {
   inputTokens: number;
 }
 
+export interface DataCoverage {
+  historyAvailable: boolean;
+  knownSessions: number;
+  sessionsWithTranscript: number;
+  missingTranscripts: number;
+  missingProjects: string[];
+  historyStart: string;
+  earliestSurvivingTranscript: string;
+}
+
 export interface OverviewStats {
+  coverage: DataCoverage;
   totalSessions: number;
   totalUserMessages: number;
   totalToolResults: number;
@@ -211,6 +222,7 @@ export interface InsightsData {
   }>;
   averageSessionDuration: number;
   averageMessagesPerSession: number;
+  totalUserMessages: number;
   mostProductiveDay: string;
   skillsUsed: Array<{ skill: string; count: number }>;
   totalActiveDays: number;

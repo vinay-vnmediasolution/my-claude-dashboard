@@ -2,6 +2,7 @@ import { Router } from "express";
 import { dataCache } from "../cache/dataCache.js";
 import { getSessions } from "../utils/sessionCache.js";
 import { buildOverviewStats } from "../processors/analyticsEngine.js";
+import { computeDataCoverage } from "../utils/sessionHistory.js";
 
 export const overviewRouter = Router();
 
@@ -12,7 +13,13 @@ overviewRouter.get("/", async (_req, res) => {
     const cacheKey = "overview";
     let stats = dataCache.get<ReturnType<typeof buildOverviewStats>>(cacheKey);
     if (!stats) {
-      stats = buildOverviewStats(sessions.map((s) => s.session));
+      const coverage = await computeDataCoverage(
+        sessions.map((s) => s.session.sessionId),
+      );
+      stats = buildOverviewStats(
+        sessions.map((s) => s.session),
+        coverage,
+      );
       dataCache.set(cacheKey, stats);
     }
 
