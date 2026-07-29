@@ -1,8 +1,5 @@
 import { format, subDays, parseISO, differenceInDays, getDay } from "date-fns";
-import {
-  computeCacheSavings,
-  resolvePricing,
-} from "./costCalculator.js";
+import { computeCacheSavings, resolvePricing } from "./costCalculator.js";
 import type {
   SessionData,
   OverviewStats,
