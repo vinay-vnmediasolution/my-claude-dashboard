@@ -120,7 +120,9 @@ export interface ModelSummary {
 export interface OverviewStats {
   totalSessions: number;
   totalUserMessages: number;
+  totalToolResults: number;
   totalAssistantMessages: number;
+  unpricedModels: string[];
   totalCost: number;
   activeDays: number;
   totalInputTokens: number;

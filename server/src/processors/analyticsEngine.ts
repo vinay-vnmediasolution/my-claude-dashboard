@@ -236,13 +236,20 @@ export function buildOverviewStats(sessions: SessionData[]): OverviewStats {
     a.startTime.localeCompare(b.startTime),
   );
 
+  const unpricedModels = new Set<string>();
+  for (const s of sessions) {
+    s.unpricedModels.forEach((m) => unpricedModels.add(m));
+  }
+
   return {
     totalSessions: sessions.length,
     totalUserMessages: sessions.reduce((sum, s) => sum + s.userMessageCount, 0),
+    totalToolResults: sessions.reduce((sum, s) => sum + s.toolResultCount, 0),
     totalAssistantMessages: sessions.reduce(
       (sum, s) => sum + s.assistantMessageCount,
       0,
     ),
+    unpricedModels: [...unpricedModels].sort(),
     totalCost,
     activeDays: activeDates.size,
     totalInputTokens: totalInput,

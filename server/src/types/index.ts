@@ -20,6 +20,8 @@ export interface ParsedMessage {
   attributionSkill?: string;
   // user only
   userText?: string;
+  /** True when this "user" entry is a tool result rather than a human turn. */
+  isToolResult?: boolean;
   // assistant only
   model?: string;
   usage?: RawAssistantUsage;
@@ -39,9 +41,14 @@ export interface SessionData {
   startTime: string;
   endTime: string;
   durationMinutes: number;
+  /** Human-authored turns only — excludes tool-result entries. */
   userMessageCount: number;
+  /** Tool-result entries, which the transcript also records with role "user". */
+  toolResultCount: number;
   assistantMessageCount: number;
   models: string[];
+  /** Models with no MODEL_PRICING entry, costed at DEFAULT_PRICING. */
+  unpricedModels: string[];
   entrypoints: string[];
   skills: string[];
   gitBranches: string[];
@@ -110,7 +117,10 @@ export interface ModelSummary {
 export interface OverviewStats {
   totalSessions: number;
   totalUserMessages: number;
+  totalToolResults: number;
   totalAssistantMessages: number;
+  /** Non-empty when usage was found for a model missing from MODEL_PRICING. */
+  unpricedModels: string[];
   totalCost: number;
   activeDays: number;
   totalInputTokens: number;

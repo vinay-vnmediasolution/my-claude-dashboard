@@ -24,9 +24,11 @@ export function mergeSessionParts(
   const entrypoints = new Set<string>();
   const skills = new Set<string>();
   const gitBranches = new Set<string>();
+  const unpricedModels = new Set<string>();
   const toolUsage: Record<string, number> = {};
 
   let userMessageCount = 0;
+  let toolResultCount = 0;
   let assistantMessageCount = 0;
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
@@ -41,6 +43,7 @@ export function mergeSessionParts(
 
   for (const { session } of parts) {
     userMessageCount += session.userMessageCount;
+    toolResultCount += session.toolResultCount;
     assistantMessageCount += session.assistantMessageCount;
     totalInputTokens += session.totalInputTokens;
     totalOutputTokens += session.totalOutputTokens;
@@ -52,6 +55,7 @@ export function mergeSessionParts(
     session.entrypoints.forEach((e) => entrypoints.add(e));
     session.skills.forEach((s) => skills.add(s));
     session.gitBranches.forEach((g) => gitBranches.add(g));
+    session.unpricedModels.forEach((m) => unpricedModels.add(m));
 
     for (const [tool, count] of Object.entries(session.toolUsage)) {
       toolUsage[tool] = (toolUsage[tool] ?? 0) + count;
@@ -86,8 +90,10 @@ export function mergeSessionParts(
     endTime,
     durationMinutes,
     userMessageCount,
+    toolResultCount,
     assistantMessageCount,
     models: [...models],
+    unpricedModels: [...unpricedModels],
     entrypoints: [...entrypoints],
     skills: [...skills],
     gitBranches: [...gitBranches],

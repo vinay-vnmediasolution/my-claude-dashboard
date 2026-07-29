@@ -1,6 +1,9 @@
 import path from "path";
 import { readAllJsonlLines } from "./jsonlReader.js";
-import { computeMessageCost } from "../processors/costCalculator.js";
+import {
+  computeMessageCost,
+  isModelPriced,
+} from "../processors/costCalculator.js";
 import { BILLING_API_START_DATE } from "../config.js";
 import type {
   SessionData,
@@ -28,6 +31,18 @@ interface RawEntry {
 interface RawUserMessage {
   role: "user";
   content: string | Array<{ type: string; text?: string }>;
+}
+
+/**
+ * Tool results are recorded as entries with role "user". Counting them as
+ * human turns inflates userMessageCount by roughly the number of tool calls,
+ * which in turn skews per-message cost, averages, and the activity heatmap.
+ */
+function isToolResultMessage(message: RawUserMessage): boolean {
+  return (
+    Array.isArray(message.content) &&
+    message.content.some((b) => b.type === "tool_result")
+  );
 }
 
 interface RawAssistantMessage {
@@ -135,8 +150,10 @@ export async function parseSession(
   let minTimestamp = "";
   let maxTimestamp = "";
   let userMessageCount = 0;
+  let toolResultCount = 0;
   let assistantMessageCount = 0;
   const models = new Set<string>();
+  const unpricedModels = new Set<string>();
   const entrypoints = new Set<string>();
   const skills = new Set<string>();
   const gitBranches = new Set<string>();
@@ -177,8 +194,15 @@ export async function parseSession(
       entry.message &&
       (entry.message as RawUserMessage).role === "user"
     ) {
-      userMessageCount++;
-      const text = extractUserText(entry.message as RawUserMessage);
+      const userMessage = entry.message as RawUserMessage;
+      const isToolResult = isToolResultMessage(userMessage);
+      if (isToolResult) {
+        toolResultCount++;
+      } else {
+        userMessageCount++;
+      }
+
+      const text = isToolResult ? "" : extractUserText(userMessage);
       if (!firstUserMessage && text) firstUserMessage = text.slice(0, 120);
 
       messages.push({
@@ -192,6 +216,7 @@ export async function parseSession(
         entrypoint: entry.entrypoint,
         attributionSkill: entry.attributionSkill,
         userText: text,
+        isToolResult,
       });
       continue;
     }
@@ -206,6 +231,7 @@ export async function parseSession(
 
       assistantMessageCount++;
       models.add(msg.model);
+      if (!isModelPriced(msg.model)) unpricedModels.add(msg.model);
 
       const usage = msg.usage;
       let msgCost = 0;
@@ -265,8 +291,10 @@ export async function parseSession(
     endTime,
     durationMinutes,
     userMessageCount,
+    toolResultCount,
     assistantMessageCount,
     models: [...models],
+    unpricedModels: [...unpricedModels],
     entrypoints: [...entrypoints],
     skills: [...skills],
     gitBranches: [...gitBranches],
