@@ -1,6 +1,8 @@
 import { format, subDays, parseISO, differenceInDays, getDay } from "date-fns";
-import { computeCacheSavings } from "./costCalculator.js";
-import { MODEL_PRICING, DEFAULT_PRICING } from "../config.js";
+import {
+  computeCacheSavings,
+  resolvePricing,
+} from "./costCalculator.js";
 import type {
   SessionData,
   OverviewStats,
@@ -189,6 +191,10 @@ const ACCESS_MODE_META: Record<
     label: "Claude Code (SDK)",
     description: "Claude Code via SDK integration or programmatic invocation",
   },
+  codex: {
+    label: "Codex",
+    description: "OpenAI Codex — desktop app and CLI",
+  },
   api: {
     label: "Direct API",
     description: "Per-token API key billing — custom apps and integrations",
@@ -212,6 +218,11 @@ const ACCESS_MODE_META: Record<
 };
 
 function deriveAccessMode(session: SessionData): AccessMode {
+  // The remaining rules read Claude Code's entrypoint and billing fields, which
+  // another provider never sets — without this the whole of Codex would fall
+  // through to "unknown" despite its access mode being the one thing we do know.
+  if (session.provider === "codex") return "codex";
+
   const eps = session.entrypoints;
   if (eps.includes("sdk-cli")) return "claude-code-sdk";
   if (eps.includes("cli")) return "claude-code";
@@ -364,7 +375,12 @@ export function buildAnalyticsData(
   // Compute savings per session using its own model's pricing, then sum
   const savingsUSD = filtered.reduce(
     (sum, s) =>
-      sum + computeCacheSavings(s.totalCacheReadTokens, s.models[0] ?? ""),
+      sum +
+      computeCacheSavings(
+        s.totalCacheReadTokens,
+        s.provider,
+        s.models[0] ?? "",
+      ),
     0,
   );
   const cacheMetrics: CacheMetrics = {
@@ -381,9 +397,12 @@ export function buildAnalyticsData(
   >();
   for (const s of filtered) {
     const existing = projectCostMap.get(s.projectName);
-    const pricing = MODEL_PRICING[s.models[0] ?? ""] ?? DEFAULT_PRICING;
-    const inputCost = (s.totalInputTokens * pricing.input) / 1_000_000;
-    const outputCost = (s.totalOutputTokens * pricing.output) / 1_000_000;
+    // Null for an unpriced model, which zeroes the split to match the session's
+    // own estimatedCost of 0 — otherwise the parts would not sum to the whole.
+    const pricing = resolvePricing(s.provider, s.models[0] ?? "");
+    const inputCost = (s.totalInputTokens * (pricing?.input ?? 0)) / 1_000_000;
+    const outputCost =
+      (s.totalOutputTokens * (pricing?.output ?? 0)) / 1_000_000;
     const cacheCost = s.estimatedCost - inputCost - outputCost;
     if (existing) {
       existing.cost += s.estimatedCost;
@@ -459,12 +478,20 @@ export function buildInsightsData(sessions: SessionData[]): InsightsData {
 
   const mostUsedTools = buildToolBreakdown(sessions).slice(0, 8);
 
-  const primaryModel = sessions[0]?.models[0] ?? "claude-sonnet-4-6";
-  const totalCacheRead = sessions.reduce(
-    (sum, s) => sum + s.totalCacheReadTokens,
+  // Priced per session against its own model rather than against whichever
+  // model happened to come first: sessions span several models and two
+  // providers, and one rate applied to all of them is not an estimate of
+  // anything.
+  const cacheSavingsUSD = sessions.reduce(
+    (sum, s) =>
+      sum +
+      computeCacheSavings(
+        s.totalCacheReadTokens,
+        s.provider,
+        s.models[0] ?? "",
+      ),
     0,
   );
-  const cacheSavingsUSD = computeCacheSavings(totalCacheRead, primaryModel);
 
   const projectMap = new Map<
     string,

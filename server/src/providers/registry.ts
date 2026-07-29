@@ -1,12 +1,13 @@
 import type { LoadedSession, ProviderMeta } from "../types/index.js";
 import type { SessionProvider } from "./types.js";
 import { claudeCodeProvider } from "./claudeCode/index.js";
+import { codexProvider } from "./codex/index.js";
 
 /**
  * Every provider the dashboard knows how to read. Adding a coding agent means
  * appending to this list — nothing downstream needs to change.
  */
-export const providers: SessionProvider[] = [claudeCodeProvider];
+export const providers: SessionProvider[] = [claudeCodeProvider, codexProvider];
 
 async function availableProviders(): Promise<SessionProvider[]> {
   const flags = await Promise.all(providers.map((p) => p.isAvailable()));

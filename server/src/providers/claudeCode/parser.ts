@@ -5,6 +5,8 @@ import {
   isModelPriced,
 } from "../../processors/costCalculator.js";
 import { BILLING_API_START_DATE } from "../../config.js";
+import { deriveProjectName } from "../../utils/projectName.js";
+import { computeActiveMinutes } from "../../utils/activeTime.js";
 import type {
   SessionData,
   ParsedMessage,
@@ -131,57 +133,6 @@ function deriveBillingSource(
   return "pro";
 }
 
-/**
- * Gaps longer than this are treated as the session sitting idle rather than
- * active work — a session left open overnight otherwise reports its full
- * wall-clock span as duration.
- */
-const IDLE_GAP_MS = 5 * 60_000;
-
-function computeActiveMinutes(messages: ParsedMessage[]): number {
-  const times = messages
-    .map((m) => new Date(m.timestamp).getTime())
-    .filter((t) => Number.isFinite(t))
-    .sort((a, b) => a - b);
-
-  let activeMs = 0;
-  for (let i = 1; i < times.length; i++) {
-    const gap = times[i] - times[i - 1];
-    if (gap > 0 && gap <= IDLE_GAP_MS) activeMs += gap;
-  }
-  return Math.round(activeMs / 60_000);
-}
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const SKIP_SEGMENTS = new Set([
-  "workspaces",
-  "instances",
-  "default",
-  "support",
-  "library",
-  "application",
-]);
-
-function toTitleCase(seg: string): string {
-  return seg
-    .split(/[-_ ]+/)
-    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ""))
-    .join(" ")
-    .trim();
-}
-
-function deriveProjectName(cwd: string): string {
-  const parts = cwd.split("/").filter(Boolean);
-  for (let i = parts.length - 1; i >= 0; i--) {
-    const seg = parts[i];
-    if (!UUID_RE.test(seg) && !SKIP_SEGMENTS.has(seg.toLowerCase())) {
-      return toTitleCase(seg);
-    }
-  }
-  return toTitleCase(parts[parts.length - 1] ?? cwd);
-}
-
 export async function parseSession(
   filePath: string,
   projectDirKey: string,
@@ -289,7 +240,7 @@ export async function parseSession(
         totalCacheCreateTokens += usage.cache_creation_input_tokens ?? 0;
         totalCacheReadTokens += usage.cache_read_input_tokens ?? 0;
         if (usage.service_tier) serviceTiers.add(usage.service_tier);
-        msgCost = computeMessageCost(usage, msg.model);
+        msgCost = computeMessageCost(usage, "claude-code", msg.model);
         totalCost += msgCost;
       }
 
@@ -346,7 +297,9 @@ export async function parseSession(
     startTime,
     endTime,
     durationMinutes,
-    activeMinutes: computeActiveMinutes(messages),
+    activeMinutes: computeActiveMinutes(
+      messages.map((m) => new Date(m.timestamp).getTime()),
+    ),
     userMessageCount,
     toolResultCount,
     assistantMessageCount,
