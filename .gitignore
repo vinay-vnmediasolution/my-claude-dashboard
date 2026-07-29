@@ -16,4 +16,12 @@ server/dist/
 
 # Local marketing / social content (keep off GitHub)
 docs/linkedin-post.html
+
+# Screenshots and page captures render real prompts, project paths and spend.
+# Note that adding a rule here does NOT untrack a file that is already
+# committed — check `git ls-files` before assuming a pattern is protecting you.
 *.png
+*.jpg
+*.jpeg
+*.webp
+*.yml.snapshot

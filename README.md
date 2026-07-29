@@ -4,7 +4,9 @@ A premium, open-source local analytics dashboard for [Claude Code](https://claud
 
 **All data stays 100% local. No external APIs. No telemetry.**
 
-![Overview](docs/overview.png)
+> Screenshots are deliberately not committed. Every view renders real prompts,
+> project paths, and spend, so a screenshot of this dashboard is a screenshot of
+> your work. Run it locally to see it — `npm install && npm run dev`.
 
 ## Features
 
