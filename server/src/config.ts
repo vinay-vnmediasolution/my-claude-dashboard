@@ -12,6 +12,7 @@ function resolveDir(dir: string): string {
 }
 
 export const CLAUDE_DIR = resolveDir(process.env.CLAUDE_DIR ?? "~/.claude");
+export const CODEX_DIR = resolveDir(process.env.CODEX_DIR ?? "~/.codex");
 export const PORT = parseInt(process.env.PORT ?? "3001", 10);
 export const CACHE_TTL_MS =
   parseInt(process.env.CACHE_TTL_SECONDS ?? "60", 10) * 1000;

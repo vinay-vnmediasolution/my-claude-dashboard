@@ -34,18 +34,31 @@ export function Overview() {
         </h1>
         <p className="text-sm text-white/40 mt-1">
           {data.coverage.missingTranscripts > 0
-            ? "Retained Claude usage"
-            : "All-time Claude usage"}{" "}
+            ? "Retained usage"
+            : "All-time usage"}{" "}
           · {data.totalSessions} sessions across {data.topProjects.length}{" "}
           projects
         </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {data.providers
+            .filter((p) => p.available)
+            .map((p) => (
+              <span
+                key={p.id}
+                className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white/50"
+              >
+                {p.label}
+                <span className="ml-1.5 text-white/30">{p.sessions}</span>
+              </span>
+            ))}
+        </div>
       </div>
 
       {data.coverage.missingTranscripts > 0 && (
         <div className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-3">
           <p className="text-sm font-medium text-sky-200">
             Showing {data.coverage.sessionsWithTranscript} of{" "}
-            {data.coverage.knownSessions} known sessions —{" "}
+            {data.coverage.knownSessions} known Claude Code sessions —{" "}
             {data.coverage.missingTranscripts} transcripts have been deleted
           </p>
           <p className="mt-1 text-xs text-sky-200/70">
@@ -69,13 +82,16 @@ export function Overview() {
       {data.unpricedModels.length > 0 && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
           <p className="text-sm font-medium text-amber-200">
-            Costs are understated for {data.unpricedModels.length} unrecognised{" "}
+            Costs are understated for {data.unpricedModels.length} unpriced{" "}
             {data.unpricedModels.length === 1 ? "model" : "models"}
           </p>
           <p className="mt-1 text-xs text-amber-200/70">
-            {data.unpricedModels.join(", ")} — billed at fallback rates. Add{" "}
+            {data.unpricedModels.join(", ")} — no entry in MODEL_PRICING.
+            Unrecognised Claude models fall back to Sonnet rates; Codex models
+            are reported at $0 rather than guessed, so their tokens are counted
+            but their spend is not. Add{" "}
             {data.unpricedModels.length === 1 ? "an entry" : "entries"} to
-            MODEL_PRICING in server/src/config.ts.
+            MODEL_PRICING in server/src/config.ts to price them.
           </p>
         </div>
       )}

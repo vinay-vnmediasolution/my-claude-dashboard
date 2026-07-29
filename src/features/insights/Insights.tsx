@@ -46,7 +46,7 @@ export function Insights() {
           Insights
         </h1>
         <p className="text-sm text-white/40 mt-1">
-          Patterns and discoveries from your Claude usage
+          Patterns and discoveries from your coding-agent usage
         </p>
       </div>
 
@@ -195,9 +195,7 @@ export function Insights() {
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-white">Tool Usage</h3>
-                <p className="text-xs text-white/40 mt-0.5">
-                  Most-used Claude tools
-                </p>
+                <p className="text-xs text-white/40 mt-0.5">Most-used tools</p>
               </div>
             </div>
             <div className="space-y-3">
@@ -261,7 +259,7 @@ export function Insights() {
                   Session Patterns
                 </h3>
                 <p className="text-xs text-white/40 mt-0.5">
-                  How you work with Claude
+                  How you work with coding agents
                 </p>
               </div>
             </div>

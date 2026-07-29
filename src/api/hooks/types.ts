@@ -75,6 +75,7 @@ export interface BillingBreakdownEntry {
 export type AccessMode =
   | "claude-code"
   | "claude-code-sdk"
+  | "codex"
   | "api"
   | "claude-ai-pro"
   | "claude-ai-max"
