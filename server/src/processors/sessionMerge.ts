@@ -26,6 +26,7 @@ export function mergeSessionParts(
   const gitBranches = new Set<string>();
   const unpricedModels = new Set<string>();
   const toolUsage: Record<string, number> = {};
+  const toolErrors: Record<string, number> = {};
 
   let userMessageCount = 0;
   let toolResultCount = 0;
@@ -59,6 +60,10 @@ export function mergeSessionParts(
 
     for (const [tool, count] of Object.entries(session.toolUsage)) {
       toolUsage[tool] = (toolUsage[tool] ?? 0) + count;
+    }
+
+    for (const [tool, count] of Object.entries(session.toolErrors)) {
+      toolErrors[tool] = (toolErrors[tool] ?? 0) + count;
     }
 
     if (!startTime || session.startTime < startTime)
@@ -98,6 +103,7 @@ export function mergeSessionParts(
     skills: [...skills],
     gitBranches: [...gitBranches],
     toolUsage,
+    toolErrors,
     totalInputTokens,
     totalOutputTokens,
     totalCacheCreateTokens,
