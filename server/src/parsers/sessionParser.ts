@@ -131,6 +131,27 @@ function deriveBillingSource(
   return "pro";
 }
 
+/**
+ * Gaps longer than this are treated as the session sitting idle rather than
+ * active work — a session left open overnight otherwise reports its full
+ * wall-clock span as duration.
+ */
+const IDLE_GAP_MS = 5 * 60_000;
+
+function computeActiveMinutes(messages: ParsedMessage[]): number {
+  const times = messages
+    .map((m) => new Date(m.timestamp).getTime())
+    .filter((t) => Number.isFinite(t))
+    .sort((a, b) => a - b);
+
+  let activeMs = 0;
+  for (let i = 1; i < times.length; i++) {
+    const gap = times[i] - times[i - 1];
+    if (gap > 0 && gap <= IDLE_GAP_MS) activeMs += gap;
+  }
+  return Math.round(activeMs / 60_000);
+}
+
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SKIP_SEGMENTS = new Set([
@@ -324,6 +345,7 @@ export async function parseSession(
     startTime,
     endTime,
     durationMinutes,
+    activeMinutes: computeActiveMinutes(messages),
     userMessageCount,
     toolResultCount,
     assistantMessageCount,

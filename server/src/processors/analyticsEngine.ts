@@ -16,6 +16,7 @@ import type {
   BillingBreakdownEntry,
   AccessMode,
   AccessModeEntry,
+  DataCoverage,
 } from "../types/index.js";
 
 const DAYS_OF_WEEK = [
@@ -246,7 +247,10 @@ function buildAccessModeBreakdown(sessions: SessionData[]): AccessModeEntry[] {
   return [...map.values()].sort((a, b) => b.sessions - a.sessions);
 }
 
-export function buildOverviewStats(sessions: SessionData[]): OverviewStats {
+export function buildOverviewStats(
+  sessions: SessionData[],
+  coverage: DataCoverage,
+): OverviewStats {
   const activeDates = new Set(sessions.map((s) => s.startTime.slice(0, 10)));
   const totalCost = sessions.reduce((sum, s) => sum + s.estimatedCost, 0);
   const totalInput = sessions.reduce((sum, s) => sum + s.totalInputTokens, 0);
@@ -296,6 +300,7 @@ export function buildOverviewStats(sessions: SessionData[]): OverviewStats {
     lastSessionDate: sortedSessions[sortedSessions.length - 1]?.startTime ?? "",
     billingBreakdown: buildBillingBreakdown(sessions),
     accessModeBreakdown: buildAccessModeBreakdown(sessions),
+    coverage,
   };
 }
 
@@ -464,7 +469,7 @@ export function buildInsightsData(sessions: SessionData[]): InsightsData {
   >();
   for (const s of sessions) {
     const existing = projectMap.get(s.projectName);
-    const hours = s.durationMinutes / 60;
+    const hours = s.activeMinutes / 60;
     if (existing) {
       existing.sessions++;
       existing.totalHours += hours;
@@ -484,8 +489,7 @@ export function buildInsightsData(sessions: SessionData[]): InsightsData {
 
   const avgDuration =
     sessions.length > 0
-      ? sessions.reduce((sum, s) => sum + s.durationMinutes, 0) /
-        sessions.length
+      ? sessions.reduce((sum, s) => sum + s.activeMinutes, 0) / sessions.length
       : 0;
   const avgMessages =
     sessions.length > 0
@@ -514,7 +518,7 @@ export function buildInsightsData(sessions: SessionData[]): InsightsData {
     .sort((a, b) => b.count - a.count);
 
   const longestSession =
-    [...sessions].sort((a, b) => b.durationMinutes - a.durationMinutes)[0] ??
+    [...sessions].sort((a, b) => b.activeMinutes - a.activeMinutes)[0] ??
     sessions[0] ??
     ({ sessionId: "", durationMinutes: 0, projectName: "" } as SessionData);
   const mostExpensiveSession =
@@ -531,13 +535,14 @@ export function buildInsightsData(sessions: SessionData[]): InsightsData {
     favoriteProjects,
     averageSessionDuration: Math.round(avgDuration),
     averageMessagesPerSession: Math.round(avgMessages),
+    totalUserMessages: sessions.reduce((sum, s) => sum + s.userMessageCount, 0),
     mostProductiveDay,
     skillsUsed,
     totalActiveDays: new Set(sessions.map((s) => s.startTime.slice(0, 10)))
       .size,
     longestSession: {
       sessionId: longestSession.sessionId,
-      durationMinutes: longestSession.durationMinutes,
+      durationMinutes: longestSession.activeMinutes,
       projectName: longestSession.projectName,
     },
     mostExpensiveSession: {

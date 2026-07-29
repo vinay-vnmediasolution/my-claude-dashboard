@@ -1,5 +1,6 @@
 import { useOverview } from "@/api/hooks/useOverview";
 import { PageLoader } from "@/components/shared/LoadingSpinner";
+import { formatDate } from "@/lib/formatters";
 import { HeroStats } from "./HeroStats";
 import { ActivityHeatmap } from "./ActivityHeatmap";
 import { HourlyChart } from "./HourlyChart";
@@ -32,10 +33,38 @@ export function Overview() {
           Overview
         </h1>
         <p className="text-sm text-white/40 mt-1">
-          All-time Claude usage · {data.totalSessions} sessions across{" "}
-          {data.topProjects.length} projects
+          {data.coverage.missingTranscripts > 0
+            ? "Retained Claude usage"
+            : "All-time Claude usage"}{" "}
+          · {data.totalSessions} sessions across {data.topProjects.length}{" "}
+          projects
         </p>
       </div>
+
+      {data.coverage.missingTranscripts > 0 && (
+        <div className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-3">
+          <p className="text-sm font-medium text-sky-200">
+            Showing {data.coverage.sessionsWithTranscript} of{" "}
+            {data.coverage.knownSessions} known sessions —{" "}
+            {data.coverage.missingTranscripts} transcripts have been deleted
+          </p>
+          <p className="mt-1 text-xs text-sky-200/70">
+            Claude Code removes transcripts after{" "}
+            <code className="text-sky-200/90">cleanupPeriodDays</code> (30 by
+            default), so totals below cover roughly the last month rather than
+            all time. Your prompt history goes back to{" "}
+            {formatDate(data.coverage.historyStart, "MMM d, yyyy")}, but the
+            earliest surviving transcript is{" "}
+            {formatDate(
+              data.coverage.earliestSurvivingTranscript,
+              "MMM d, yyyy",
+            )}
+            . {data.coverage.missingProjects.length} projects have no surviving
+            transcript at all. Cost for deleted sessions is unrecoverable —
+            history records prompts only, not token usage.
+          </p>
+        </div>
+      )}
 
       {data.unpricedModels.length > 0 && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">

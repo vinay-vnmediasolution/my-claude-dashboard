@@ -378,9 +378,7 @@ export function Insights() {
                 {
                   icon: MessageSquare,
                   label: "Messages sent",
-                  value: String(
-                    data.averageMessagesPerSession * data.totalActiveDays,
-                  ),
+                  value: String(data.totalUserMessages),
                 },
                 {
                   icon: Calendar,
