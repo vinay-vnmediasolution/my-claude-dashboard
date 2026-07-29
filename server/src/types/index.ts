@@ -8,6 +8,16 @@ export interface RawAssistantUsage {
 
 export type BillingSource = "api" | "max" | "pro" | "free" | "unknown";
 
+/** Coding agent a session came from. */
+export type ProviderId = "claude-code" | "codex";
+
+export interface ProviderMeta {
+  id: ProviderId;
+  label: string;
+  available: boolean;
+  sessions: number;
+}
+
 export interface ParsedMessage {
   uuid: string;
   parentUuid: string | null;
@@ -32,6 +42,8 @@ export interface ParsedMessage {
 }
 
 export interface SessionData {
+  /** Which coding agent produced this session. */
+  provider: ProviderId;
   sessionId: string;
   projectDirKey: string;
   projectPath: string;
@@ -64,6 +76,12 @@ export interface SessionData {
   totalCacheReadTokens: number;
   estimatedCost: number;
   billingSource: BillingSource;
+}
+
+/** A session plus its parsed messages, as returned by a provider. */
+export interface LoadedSession {
+  session: SessionData;
+  messages: ParsedMessage[];
 }
 
 export interface BillingBreakdownEntry {
@@ -158,6 +176,8 @@ export interface OverviewStats {
   billingBreakdown: BillingBreakdownEntry[];
   accessModeBreakdown: AccessModeEntry[];
   coverage: DataCoverage;
+  /** Which coding agents were read, and how many sessions each contributed. */
+  providers: ProviderMeta[];
 }
 
 export interface TokenTimelineEntry {

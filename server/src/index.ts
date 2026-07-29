@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import { PORT, CLAUDE_DIR } from "./config.js";
 import { dataCache } from "./cache/dataCache.js";
-import { loadAllSessions } from "./processors/sessionAggregator.js";
+import type { LoadedSession } from "./types/index.js";
 import { overviewRouter } from "./routes/overview.js";
 import { sessionsRouter } from "./routes/sessions.js";
 import { analyticsRouter } from "./routes/analytics.js";
@@ -19,8 +19,7 @@ app.use("/api/analytics", analyticsRouter);
 app.use("/api/insights", insightsRouter);
 
 app.get("/api/health", async (_req, res) => {
-  const cached =
-    dataCache.get<Awaited<ReturnType<typeof loadAllSessions>>>("sessions");
+  const cached = dataCache.get<LoadedSession[]>("sessions");
   const sessionCount = cached?.length ?? null;
   const lastParsed = dataCache.lastSet("sessions");
   res.json({

@@ -1,16 +1,16 @@
 import path from "path";
-import { readAllJsonlLines } from "./jsonlReader.js";
+import { readAllJsonlLines } from "../../parsers/jsonlReader.js";
 import {
   computeMessageCost,
   isModelPriced,
-} from "../processors/costCalculator.js";
-import { BILLING_API_START_DATE } from "../config.js";
+} from "../../processors/costCalculator.js";
+import { BILLING_API_START_DATE } from "../../config.js";
 import type {
   SessionData,
   ParsedMessage,
   RawAssistantUsage,
   BillingSource,
-} from "../types/index.js";
+} from "../../types/index.js";
 
 interface RawEntry {
   type?: string;
@@ -336,6 +336,7 @@ export async function parseSession(
   const durationMinutes = Math.max(0, Math.round(durationMs / 60_000));
 
   const session: SessionData = {
+    provider: "claude-code",
     sessionId,
     projectDirKey,
     projectPath,

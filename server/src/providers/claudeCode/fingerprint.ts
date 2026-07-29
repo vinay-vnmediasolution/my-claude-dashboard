@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { CLAUDE_DIR } from "../config.js";
+import { CLAUDE_DIR } from "../../config.js";
 
 async function collectJsonlStats(
   dir: string,

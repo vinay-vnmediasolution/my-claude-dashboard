@@ -1,14 +1,9 @@
 import fs from "fs";
 import path from "path";
-import { CLAUDE_DIR } from "../config.js";
-import { parseSession } from "../parsers/sessionParser.js";
-import { mergeSessionParts } from "./sessionMerge.js";
-import type { SessionData, ParsedMessage } from "../types/index.js";
-
-export interface LoadedSession {
-  session: SessionData;
-  messages: ParsedMessage[];
-}
+import { CLAUDE_DIR } from "../../config.js";
+import { parseSession } from "./parser.js";
+import { mergeSessionParts } from "./merge.js";
+import type { LoadedSession } from "../../types/index.js";
 
 let inflightLoad: Promise<LoadedSession[]> | null = null;
 
