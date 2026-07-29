@@ -30,19 +30,58 @@ export interface ModelPricing {
   cacheRead: number;
 }
 
-// Prices in USD per million tokens
+// Prices in USD per million tokens. Cache write is 1.25x input (5-minute TTL),
+// cache read is 0.1x input.
 export const MODEL_PRICING: Record<string, ModelPricing> = {
+  "claude-fable-5": {
+    input: 10,
+    output: 50,
+    cacheWrite: 12.5,
+    cacheRead: 1.0,
+  },
+  "claude-mythos-5": {
+    input: 10,
+    output: 50,
+    cacheWrite: 12.5,
+    cacheRead: 1.0,
+  },
+  "claude-opus-5": {
+    input: 5,
+    output: 25,
+    cacheWrite: 6.25,
+    cacheRead: 0.5,
+  },
+  "claude-opus-4-8": {
+    input: 5,
+    output: 25,
+    cacheWrite: 6.25,
+    cacheRead: 0.5,
+  },
   "claude-opus-4-7": {
-    input: 15,
-    output: 75,
-    cacheWrite: 18.75,
-    cacheRead: 1.5,
+    input: 5,
+    output: 25,
+    cacheWrite: 6.25,
+    cacheRead: 0.5,
+  },
+  "claude-opus-4-6": {
+    input: 5,
+    output: 25,
+    cacheWrite: 6.25,
+    cacheRead: 0.5,
   },
   "claude-opus-4-5": {
     input: 15,
     output: 75,
     cacheWrite: 18.75,
     cacheRead: 1.5,
+  },
+  // Sonnet 5 list price. An introductory $2/$10 rate applies through
+  // 2026-08-31; list price is used here so costs aren't understated later.
+  "claude-sonnet-5": {
+    input: 3,
+    output: 15,
+    cacheWrite: 3.75,
+    cacheRead: 0.3,
   },
   "claude-sonnet-4-6": {
     input: 3,
@@ -63,16 +102,16 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
     cacheRead: 0.3,
   },
   "claude-haiku-4-5": {
-    input: 0.8,
-    output: 4,
-    cacheWrite: 1.0,
-    cacheRead: 0.08,
+    input: 1,
+    output: 5,
+    cacheWrite: 1.25,
+    cacheRead: 0.1,
   },
   "claude-haiku-4-5-20251001": {
-    input: 0.8,
-    output: 4,
-    cacheWrite: 1.0,
-    cacheRead: 0.08,
+    input: 1,
+    output: 5,
+    cacheWrite: 1.25,
+    cacheRead: 0.1,
   },
 };
 

@@ -16,7 +16,7 @@ interface UIStore {
 }
 
 export const useUIStore = create<UIStore>((set) => ({
-  dateRange: { from: subDays(new Date(), 30), to: new Date() },
+  dateRange: { from: subDays(new Date(), 90), to: new Date() },
   selectedModel: null,
   selectedProject: null,
   setDateRange: (range) => set({ dateRange: range }),

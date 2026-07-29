@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { CLAUDE_DIR } from "../config.js";
 import { parseSession } from "../parsers/sessionParser.js";
+import { mergeSessionParts } from "./sessionMerge.js";
 import type { SessionData, ParsedMessage } from "../types/index.js";
 
 export interface LoadedSession {
@@ -17,6 +18,53 @@ export async function loadAllSessions(): Promise<LoadedSession[]> {
     inflightLoad = null;
   });
   return inflightLoad;
+}
+
+async function discoverSessionFileGroups(
+  projectPath: string,
+): Promise<Map<string, string[]>> {
+  const groups = new Map<string, string[]>();
+
+  const addFile = (sessionId: string, filePath: string) => {
+    const list = groups.get(sessionId) ?? [];
+    list.push(filePath);
+    groups.set(sessionId, list);
+  };
+
+  let entries: fs.Dirent[];
+  try {
+    entries = await fs.promises.readdir(projectPath, { withFileTypes: true });
+  } catch {
+    return groups;
+  }
+
+  for (const entry of entries) {
+    const fullPath = path.join(projectPath, entry.name);
+
+    if (entry.isFile() && entry.name.endsWith(".jsonl")) {
+      addFile(path.basename(entry.name, ".jsonl"), fullPath);
+      continue;
+    }
+
+    if (!entry.isDirectory()) continue;
+
+    const subagentsDir = path.join(fullPath, "subagents");
+    try {
+      const subFiles = (await fs.promises.readdir(subagentsDir)).filter((f) =>
+        f.endsWith(".jsonl"),
+      );
+      if (subFiles.length === 0) continue;
+
+      const sessionId = entry.name;
+      for (const file of subFiles) {
+        addFile(sessionId, path.join(subagentsDir, file));
+      }
+    } catch {
+      // No subagents directory for this folder
+    }
+  }
+
+  return groups;
 }
 
 async function doLoadAllSessions(): Promise<LoadedSession[]> {
@@ -36,14 +84,17 @@ async function doLoadAllSessions(): Promise<LoadedSession[]> {
   const perProjectResults = await Promise.all(
     projectDirs.map(async (projectDir) => {
       const projectPath = path.join(projectsDir, projectDir.name);
-      const files = (await fs.promises.readdir(projectPath)).filter((f) =>
-        f.endsWith(".jsonl"),
-      );
+      const fileGroups = await discoverSessionFileGroups(projectPath);
 
       const settled = await Promise.allSettled(
-        files.map((file) =>
-          parseSession(path.join(projectPath, file), projectDir.name),
-        ),
+        [...fileGroups.entries()].map(async ([sessionId, filePaths]) => {
+          const parts = await Promise.all(
+            filePaths.map((filePath) =>
+              parseSession(filePath, projectDir.name),
+            ),
+          );
+          return mergeSessionParts(sessionId, parts);
+        }),
       );
 
       const loaded: LoadedSession[] = [];

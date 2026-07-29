@@ -79,8 +79,7 @@ export function Shell() {
 
   const handleCacheInvalidate = async () => {
     await fetch("/api/cache/invalidate", { method: "POST" });
-    queryClient.clear();
-    window.location.reload();
+    await queryClient.invalidateQueries();
   };
 
   return (
